@@ -19,7 +19,7 @@ services:
       - NEO4J_server_bolt_tls__level=DISABLED
     ports:
       - "7474:7474" # HTTP Browser (Akses web UI Neo4j)
-      - "7687:7687" # Bolt port (Untuk koneksi dari aplikasi LLM nanti)
+      - "127.0.0.1:7687:7687" # Bolt port (Untuk koneksi dari aplikasi LLM nanti)
     volumes:
       - neo4j_data:/data
     networks:
