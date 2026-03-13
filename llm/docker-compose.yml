@@ -7,6 +7,11 @@ services:
     restart: unless-stopped
     environment:
       - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+      - NEO4J_server_default__advertised__address=neo4j.anyone.ganeshait.com
+      - NEO4J_server_bolt_advertised__address=neo4j.anyone.ganeshait.com:7687
+      # Untuk mendukung SSL/WSS lewat Proxy
+      - NEO4J_server_bolt_listen__address=:7687
+      - NEO4J_dbms_connector_bolt_tls__level=OPTIONAL
     ports:
       - "7474:7474" # HTTP Browser (Akses web UI Neo4j)
       - "7687:7687" # Bolt port (Untuk koneksi dari aplikasi LLM nanti)
