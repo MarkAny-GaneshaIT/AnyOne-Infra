@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:5.26-community-ubi9
+    container_name: llm_neo4j
+    restart: unless-stopped
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+    ports:
+      - "7474:7474" # HTTP Browser (Akses web UI Neo4j)
+      - "7687:7687" # Bolt port (Untuk koneksi dari aplikasi LLM nanti)
+    volumes:
+      - neo4j_data:/data
+    networks:
+      - anyone_network
+
+volumes:
+  neo4j_data:
+
+networks:
+  anyone_network:
+    external: true

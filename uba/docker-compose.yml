@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.8.7
+    container_name: uba_kafka
+    hostname: uba_kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # Mode KRaft
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@uba_kafka:9093'
+      
+      # Listeners
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://uba_kafka:9092'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      
+      # Cluster ID (Wajib unik untuk KRaft)
+      CLUSTER_ID: 'EmptNWtoR4GGWx-BH6nGLQ'
+      
+      # Optimasi Resource untuk VPS
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_HEAP_OPTS: "-Xmx512m -Xms512m" # Batasi RAM Java Heap
+    volumes:
+      - ./kafka_data:/var/lib/kafka/data
+    networks:
+      - anyone_network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: uba_kafka_ui
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080" # Akses Dashboard di port 8080
+    environment:
+      KAFKA_CLUSTERS_0_NAME: anyone-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: uba_kafka:9092
+    networks:
+      - anyone_network
+
+networks:
+  anyone_network:
+    external: true
