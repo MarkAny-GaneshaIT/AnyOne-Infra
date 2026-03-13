@@ -7,11 +7,17 @@ services:
     restart: unless-stopped
     environment:
       - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+
+      # Setting modern untuk Neo4j 5.x
       - NEO4J_server_default__advertised__address=neo4j.anyone.ganeshait.com
       - NEO4J_server_bolt_advertised__address=neo4j.anyone.ganeshait.com:7687
-      # Untuk mendukung SSL/WSS lewat Proxy
       - NEO4J_server_bolt_listen__address=:7687
-      - NEO4J_dbms_connector_bolt_tls__level=OPTIONAL
+      
+      # Kita matikan TLS internal karena sudah dihandle Nginx
+      - NEO4J_server_bolt_tls__level=DISABLED
+      
+      # Tambahkan ini untuk menghilangkan warning UBI9 di log
+      - NEO4J_DEPRECATION_WARNING=suppress
     ports:
       - "7474:7474" # HTTP Browser (Akses web UI Neo4j)
       - "7687:7687" # Bolt port (Untuk koneksi dari aplikasi LLM nanti)
