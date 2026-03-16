@@ -13,6 +13,7 @@ services:
 
       # Tell Neo4j to handle its own SSL securely
       - NEO4J_server_bolt_tls__level=REQUIRED
+      - NEO4J_dbms_ssl_policy_bolt_enabled=true
       - NEO4J_dbms_ssl_policy_bolt_base__directory=/certs
       - NEO4J_dbms_ssl_policy_bolt_private__key=privkey.pem
       - NEO4J_dbms_ssl_policy_bolt_public__certificate=fullchain.pem
