@@ -8,20 +8,21 @@ services:
     environment:
       - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
       - NEO4J_DEPRECATION_WARNING=suppress
-      
-      # Beritahu Neo4j kalau alamat publiknya adalah HTTPS (Port 443)
       - NEO4J_server_http_advertised__address=neo4j.anyone.ganeshait.com:443
-      
-      # Alamat Bolt tetap di port 7687
       - NEO4J_server_bolt_advertised__address=neo4j.anyone.ganeshait.com:7687
-      
-      # Matikan TLS internal karena kita pakai Nginx
-      - NEO4J_server_bolt_tls__level=DISABLED
+
+      # Tell Neo4j to handle its own SSL securely
+      - NEO4J_server_bolt_tls__level=REQUIRED
+      - NEO4J_dbms_ssl_policy_bolt_base__directory=/certs
+      - NEO4J_dbms_ssl_policy_bolt_private__key=privkey.pem
+      - NEO4J_dbms_ssl_policy_bolt_public__certificate=fullchain.pem
     ports:
-      - "7474:7474" # HTTP Browser (Akses web UI Neo4j)
-      - "127.0.0.1:7688:7687" # Bolt port (Untuk koneksi dari aplikasi LLM nanti)
+      - "7474:7474" 
+      # - "127.0.0.1:7688:7687" # Bolt port (Untuk koneksi dari aplikasi LLM nanti)
+      - "7687:7687" # Exposed directly to the public now
     volumes:
       - neo4j_data:/data
+      - ./certs:/certs:ro # Mount the certificates we just copied
     networks:
       - anyone_network
 
