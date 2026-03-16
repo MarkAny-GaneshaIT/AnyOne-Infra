@@ -26,6 +26,16 @@ services:
       - ./certs:/certs:ro # Mount the certificates we just copied
     networks:
       - anyone_network
+  
+  redis:
+    image: redis:8.6-trixie
+    container_name: llm_redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning --requirepass ${REDIS_PASSWORD} # Simpan data ke disk setiap 60 detik jika ada 1 perubahan
+    volumes:
+      - redis_data:/data
+    networks:
+      - anyone_network
 
 volumes:
   neo4j_data:
