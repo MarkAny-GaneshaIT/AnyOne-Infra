@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   neo4j:
-    image: neo4j:5.26.22-community-trixie
+    image: neo4j:5-community
     container_name: llm_neo4j
     restart: unless-stopped
     ports:
