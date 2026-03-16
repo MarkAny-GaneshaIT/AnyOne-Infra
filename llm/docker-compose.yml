@@ -45,6 +45,15 @@ services:
       - redis_data:/data
     networks:
       - anyone_network
+  
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: llm_redis_insight
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5540:5540" # Bound locally for SSH tunnel!
+    networks:
+      - anyone_network
 
 volumes:
   neo4j_data:
