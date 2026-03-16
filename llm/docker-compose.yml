@@ -39,6 +39,7 @@ services:
 
 volumes:
   neo4j_data:
+  redis_data:
 
 networks:
   anyone_network:
