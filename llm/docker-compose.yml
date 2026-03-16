@@ -8,8 +8,6 @@ services:
     environment:
       - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
       - NEO4J_DEPRECATION_WARNING=suppress
-      - NEO4J_server_http_advertised__address=neo4j.anyone.ganeshait.com:443
-      - NEO4J_server_bolt_advertised__address=neo4j.anyone.ganeshait.com:7687
 
       # Tell Neo4j to handle its own SSL securely
       - NEO4J_server_bolt_tls__level=REQUIRED
