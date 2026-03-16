@@ -5,25 +5,36 @@ services:
     image: neo4j:5.26-community-ubi9
     container_name: llm_neo4j
     restart: unless-stopped
+    ports:
+      - "7474:7474" 
+      - "127.0.0.1:7688:7687" # Kept on 7688 so your Nginx public proxy and SSH tunnel both work
+    volumes:
+      - neo4j_data:/data
+      - ./neo4j/logs:/logs
+      - ./neo4j/import:/import
+      - ./neo4j/plugins:/plugins
     environment:
       - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
       - NEO4J_DEPRECATION_WARNING=suppress
-
-      # Tell Neo4j to handle its own SSL securely
-      - NEO4J_server_bolt_tls__level=REQUIRED
-      - NEO4J_dbms_ssl_policy_bolt_enabled=true
-      - NEO4J_dbms_ssl_policy_bolt_base__directory=/certs
-      - NEO4J_dbms_ssl_policy_bolt_private__key=privkey.pem
-      - NEO4J_dbms_ssl_policy_bolt_public__certificate=fullchain.pem
-    ports:
-      - "7474:7474" 
-      # - "127.0.0.1:7688:7687" # Bolt port (Untuk koneksi dari aplikasi LLM nanti)
-      - "7687:7687" # Exposed directly to the public now
-    volumes:
-      - neo4j_data:/data
-      - ./certs:/certs:ro # Mount the certificates we just copied
+      - NEO4J_server_bolt_tls__level=DISABLED # Keeps your SSH tunnel and local connections instant
+      
+      # APOC & Security
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      - NEO4J_server_config_strict__validation_enabled=false
+      
+      # Memory Management
+      - NEO4J_server_memory_heap_initial__size=512m
+      - NEO4J_server_memory_heap_max__size=1G
+      - NEO4J_server_memory_pagecache_size=512m
     networks:
       - anyone_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
   
   redis:
     image: redis:8.6-trixie
