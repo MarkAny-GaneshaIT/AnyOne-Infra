@@ -47,6 +47,19 @@ services:
     networks:
       - anyone_network
 
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.8.7
+    container_name: uba_schema_registry
+    restart: unless-stopped
+    depends_on:
+      - kafka
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:9092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    networks:
+      - anyone_network
+
 networks:
   anyone_network:
     external: true
