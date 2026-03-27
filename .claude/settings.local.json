@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x \"C:\\\\Users\\\\LLM-Team\\\\Desktop\\\\AnyOne-Infra\\\\.claude\\\\worktrees\\\\suspicious-wing\\\\scripts\\\\deploy.sh\")",
+      "Bash(bash scripts/deploy.sh --dry-run staging all)",
+      "Bash(bash scripts/deploy.sh --dry-run prod edr)",
+      "Bash(bash scripts/deploy.sh)",
+      "Bash(echo \"Exit code: $?\")"
+    ]
+  }
+}
