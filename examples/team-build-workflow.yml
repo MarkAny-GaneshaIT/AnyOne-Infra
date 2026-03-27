@@ -1,0 +1,115 @@
+# Example: Team Application Build & Deploy Workflow
+#
+# Copy this file into your team's repo at .github/workflows/build-deploy.yml
+# and adjust the variables in the env: section below.
+#
+# This workflow:
+#   1. Builds a Docker image from your Dockerfile
+#   2. Pushes it to GHCR with appropriate tags
+#   3. Triggers the infra repo to deploy the updated image
+#   4. Cleans up old GHCR images (keeps last 5)
+#
+# Required secrets in your repo:
+#   INFRA_REPO_PAT — GitHub PAT with repo scope to trigger infra deploys
+
+name: Build & Deploy
+
+on:
+  push:
+    branches:
+      - develop  # Triggers staging deploy
+      - main     # Triggers production deploy
+
+env:
+  # ---- Adjust these for your team ----
+  IMAGE_NAME: ghcr.io/anyone-project/edr-backend  # Your GHCR image path
+  INFRA_REPO: anyone-project/anyone-infra          # Infra repo (org/name)
+  STACK_NAME: edr                                   # Your stack: edr, uba, or llm
+  # ------------------------------------
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+      deploy_env: ${{ steps.meta.outputs.env }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine tag and environment
+        id: meta
+        run: |
+          SHA_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            TAG="prod"
+            DEPLOY_ENV="production"
+          else
+            TAG="staging"
+            DEPLOY_ENV="staging"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA_SHORT" >> "$GITHUB_OUTPUT"
+          echo "env=$DEPLOY_ENV" >> "$GITHUB_OUTPUT"
+          echo "Building image with tag: $TAG (sha: $SHA_SHORT)"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Trigger Infra Deploy
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Trigger infra repo deploy
+        run: |
+          DEPLOY_ENV="${{ needs.build-and-push.outputs.deploy_env }}"
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.INFRA_REPO_PAT }}" \
+            "https://api.github.com/repos/${{ env.INFRA_REPO }}/dispatches" \
+            -d "{\"event_type\": \"deploy-${DEPLOY_ENV}\", \"client_payload\": {\"stack\": \"${{ env.STACK_NAME }}\", \"image_tag\": \"${{ needs.build-and-push.outputs.image_tag }}\"}}"
+          echo "Triggered deploy-${DEPLOY_ENV} for stack ${{ env.STACK_NAME }}"
+
+  cleanup:
+    name: Cleanup Old GHCR Images
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    permissions:
+      packages: write
+
+    steps:
+      - name: Delete untagged and old images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ github.event.repository.name }}
+          package-type: container
+          min-versions-to-keep: 5
+          delete-only-untagged-versions: false
