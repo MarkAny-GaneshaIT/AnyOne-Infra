@@ -1,0 +1,25 @@
+# Environment files (contain secrets)
+.env
+.env.staging
+.env.prod
+.env.local
+
+# Keep example files
+!.env.example
+!.env.*.example
+
+# Logs
+*.log
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker runtime
+docker-compose.override.yml

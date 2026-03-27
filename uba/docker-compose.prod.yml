@@ -1,0 +1,51 @@
+# UBA Stack - Production Overrides
+# No admin UIs. Hardened security, higher resources, log rotation.
+
+services:
+  kafka:
+    restart: always
+    environment:
+      # Higher heap for production workloads
+      KAFKA_HEAP_OPTS: ${KAFKA_HEAP_OPTS:--Xmx1g -Xms1g}
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  schema-registry:
+    restart: always
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  uba-backend:
+    restart: always
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

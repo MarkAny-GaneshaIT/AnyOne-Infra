@@ -1,0 +1,83 @@
+# Deploy to Production VPS
+# Triggered by:
+#   1. repository_dispatch from team repos after image push to GHCR
+#   2. Manual workflow_dispatch for ad-hoc deploys
+# Requires manual approval via GitHub environment protection rules.
+
+name: Deploy to Production
+
+on:
+  repository_dispatch:
+    types: [deploy-production]
+
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: "Stack to deploy"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - edr
+          - uba
+          - llm
+
+# Prevent concurrent deploys to production
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Production VPS
+    runs-on: ubuntu-latest
+    # Requires manual approval — configure protection rules on the
+    # "production" environment in GitHub repo settings.
+    environment: production
+
+    steps:
+      - name: Checkout infra repo
+        uses: actions/checkout@v4
+
+      - name: Determine stack to deploy
+        id: params
+        run: |
+          # repository_dispatch payload takes priority, then workflow_dispatch input
+          if [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
+            STACK="${{ github.event.client_payload.stack }}"
+          else
+            STACK="${{ inputs.stack }}"
+          fi
+          # Default to 'all' if not specified
+          STACK="${STACK:-all}"
+          echo "stack=$STACK" >> "$GITHUB_OUTPUT"
+          echo "Deploying stack: $STACK"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            INFRA_DIR="${{ secrets.PROD_INFRA_DIR:-/opt/anyone-infra }}"
+
+            # Pull latest infra config
+            cd "$INFRA_DIR"
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Run deploy script
+            bash scripts/deploy.sh prod ${{ steps.params.outputs.stack }}
+
+      - name: Report result
+        if: always()
+        run: |
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "::notice::Production deploy succeeded for stack: ${{ steps.params.outputs.stack }}"
+          else
+            echo "::error::Production deploy failed for stack: ${{ steps.params.outputs.stack }}"
+          fi

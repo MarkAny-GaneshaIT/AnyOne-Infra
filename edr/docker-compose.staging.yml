@@ -1,0 +1,47 @@
+# EDR Stack - Staging Overrides
+# Adds pgAdmin UI for database management (accessible via SSH tunnel).
+# Sets moderate resource limits suitable for a smaller staging VPS.
+
+services:
+  postgres:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  edr-backend:
+    container_name: edr_backend_staging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  pgadmin:
+    image: dpage/pgadmin4:9.13
+    container_name: edr_pgadmin_staging
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_LISTEN_PORT: 80
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+      # Security protections enabled (unlike previous config)
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "True"
+      PGADMIN_CONFIG_SECURE_COOKIE: "True"
+      PGADMIN_CONFIG_CSRF_CHECK: "True"
+      # Warning-level logging (not debug)
+      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: 30
+    ports:
+      - "127.0.0.1:5050:80"
+    networks:
+      - anyone_network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M

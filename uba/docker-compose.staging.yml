@@ -1,0 +1,47 @@
+# UBA Stack - Staging Overrides
+# Adds Kafka UI for cluster management (accessible via SSH tunnel).
+# Sets moderate resource limits suitable for a smaller staging VPS.
+
+services:
+  kafka:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  schema-registry:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  uba-backend:
+    container_name: uba_backend_staging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: uba_kafka_ui_staging
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: anyone-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: uba_kafka:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://uba_schema_registry:8081
+    networks:
+      - anyone_network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M

@@ -1,0 +1,48 @@
+# LLM Stack - Staging Overrides
+# Adds Redis Insight for cache debugging (accessible via SSH tunnel).
+# Sets moderate resource limits suitable for a smaller staging VPS.
+
+services:
+  neo4j:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  llm-backend:
+    container_name: llm_backend_staging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  llm-frontend:
+    container_name: llm_frontend_staging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  redis-insight:
+    image: redis/redisinsight:2.68
+    container_name: llm_redis_insight_staging
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5540:5540"
+    networks:
+      - anyone_network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
