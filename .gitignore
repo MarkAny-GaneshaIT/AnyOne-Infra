@@ -21,5 +21,8 @@ Thumbs.db
 *.swp
 *.swo
 
+kafka_data
+__pycache__
+
 # Docker runtime
 docker-compose.override.yml
