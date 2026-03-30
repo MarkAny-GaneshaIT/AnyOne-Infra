@@ -51,7 +51,6 @@ services:
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'uba_kafka:9092'
-      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
     ports:
       - "127.0.0.1:8081:8081"

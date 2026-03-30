@@ -24,5 +24,7 @@ Thumbs.db
 kafka_data
 __pycache__
 
+md/
+
 # Docker runtime
 docker-compose.override.yml
